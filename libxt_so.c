@@ -84,12 +84,15 @@ static void parse_levels(const char *levelstring, struct so_info *info)
 	free(buffer);
 }
 
-static uint16_t parse_categ(const char *level)
+static uint64_t parse_categ(const char *level)
 {
 	unsigned int num;
 
-	if (xtables_strtoui(level, NULL, &num, 0, 64))
-		return num;
+	if (level[0] == '0' && level[1] == 'x') {
+		if (xtables_strtoui(level, NULL, &num, 0, 0))
+			return num;
+	} else if (xtables_strtoui(level, NULL, &num, 0, 64))
+		return num == 0? 0 : 1ULL << (num - 1);
 
 	xtables_error(PARAMETER_PROBLEM, "invalid category `%s' specified",
 	    level);
@@ -104,7 +107,7 @@ static void parse_categs(const char *categories, uint64_t *categout)
 	if (!buffer)
 		xtables_error(OTHER_PROBLEM, "strdup failed");
 	for (cp = buffer; cp; cp = next) {
-		uint16_t cat;
+		uint64_t cat;
 
 		next = strchr(cp, ',');
 		if (next)
@@ -116,10 +119,10 @@ static void parse_categs(const char *categories, uint64_t *categout)
 		else {
 			uint64_t ocat = *categout;
 
-			*categout |= 1ULL << (cat - 1);
+			*categout |= cat;
 			if (*categout == ocat)
 				xtables_error(OTHER_PROBLEM,
-				    "--so-categ: duplicated gategory %d", cat);
+				    "--so-categ: duplicated gategories");
 		}
 	}
 	free(buffer);
