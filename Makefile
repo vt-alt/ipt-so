@@ -31,7 +31,7 @@ test:
 	./tests.sh test
 
 %.so: %_sh.o
-	gcc -shared -o $@ $<
+	gcc -shared -o $@ $< $(shell pkg-config xtables --libs)
 
 %_sh.o: libxt_so.c xt_so.h
 	gcc -O2 -Wall -Wunused -fPIC ${XFLAGS} ${CFLAGS} -o $@ -c $<
